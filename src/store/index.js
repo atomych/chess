@@ -7,8 +7,15 @@ export default createStore({
     roomKey: "",
     userID: "",
     users: { first: false, second: false },
+    moves: [],
   },
   actions: {
+    startGame({ commit }, key) {
+      writeData(`rooms/${key}/play`, true).then(() => {
+        writeData(`games/${key}/moves`, []);
+      });
+      commit("setPlay", true);
+    },
     connectToRoom({ commit, dispatch }, settings) {
       const userID = getKey();
       commit("setUserID", userID);
@@ -55,10 +62,13 @@ export default createStore({
         commit("setPlay", snapshot.val());
       });
     },
-    startGame({ commit }, key) {
-      writeData(`rooms/${key}/play`, true).then(() => {
-        commit("setPlay", true);
+    subscribeToGame({ commit }, key) {
+      subscribeToUpadate(`games/${key}/moves`, (snapshot) => {
+        commit("setMoves", snapshot.val() ? snapshot.val() : []);
       });
+    },
+    writeNewMove({ state }, move) {
+      writeData(`games/${state.roomKey}/moves`, [...state.moves, move]);
     },
   },
   mutations: {
@@ -74,6 +84,9 @@ export default createStore({
     setPlay(state, value) {
       state.play = value;
     },
+    setMoves(state, value) {
+      state.moves = value;
+    },
   },
   getters: {
     users(state) {
@@ -87,6 +100,9 @@ export default createStore({
     },
     play(state) {
       return state.play;
+    },
+    moves(state) {
+      return state.moves;
     },
   },
 });
