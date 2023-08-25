@@ -1,9 +1,92 @@
 import { createStore } from "vuex";
+import { getKey } from "../js/RandomKeys";
+import { writeData, subscribeToUpadate, readData } from "../firebase/database";
 
 export default createStore({
-  state: {},
-  getters: {},
-  mutations: {},
-  actions: {},
-  modules: {},
+  state: {
+    roomKey: "",
+    userID: "",
+    users: { first: false, second: false },
+  },
+  actions: {
+    connectToRoom({ commit, dispatch }, settings) {
+      const userID = getKey();
+      commit("setUserID", userID);
+
+      readData(`rooms/${settings.key}`).then((snapshot) => {
+        const data = snapshot.val();
+        commit("setRoomKey", data.roomKey);
+
+        writeData(`rooms/${settings.key}/users/second`, userID).then(() => {
+          commit("setUsers", { first: data.users.first, second: userID });
+          settings.cb();
+          dispatch("subscribeToStartGame", data.roomKey);
+        });
+      });
+    },
+    createRoom({ commit, dispatch }, cb) {
+      const userID = getKey();
+      const key = getKey();
+
+      writeData(`rooms/${key}`, {
+        roomKey: key,
+        users: { first: userID, second: false },
+        play: false,
+      }).then(() => {
+        commit("setUserID", userID);
+        commit("setRoomKey", key);
+        commit("setUsers", { first: userID, second: false });
+        dispatch("subscribeToRoomUpdate", key);
+        cb(key);
+      });
+    },
+    subscribeToRoomUpdate({ commit, state }, key) {
+      subscribeToUpadate(`rooms/${key}/users`, (snapshot) => {
+        const data = snapshot.val();
+        if (state.users.first == state.userID) {
+          if (data.second) commit("setUsers", data);
+        } else {
+          commit("setUsers", data);
+        }
+      });
+    },
+    subscribeToStartGame({ commit }, key) {
+      subscribeToUpadate(`rooms/${key}/play`, (snapshot) => {
+        commit("setPlay", snapshot.val());
+      });
+    },
+    startGame({ commit }, key) {
+      writeData(`rooms/${key}/play`, true).then(() => {
+        commit("setPlay", true);
+      });
+    },
+  },
+  mutations: {
+    setRoomKey(state, key) {
+      state.roomKey = key;
+    },
+    setUserID(state, id) {
+      state.userID = id;
+    },
+    setUsers(state, users) {
+      state.users = users;
+    },
+    setPlay(state, value) {
+      state.play = value;
+    },
+  },
+  getters: {
+    users(state) {
+      return state.users;
+    },
+    userID(state) {
+      return state.userID;
+    },
+    roomKey(state) {
+      return state.roomKey;
+    },
+    play(state) {
+      return state.play;
+    },
+  },
 });
