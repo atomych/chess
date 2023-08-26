@@ -14,6 +14,7 @@ class Game {
     this._selectedCells = [];
     this._selectedFigure = {};
     this._moves = [];
+    this._win = false;
 
     const letters = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
@@ -72,6 +73,27 @@ class Game {
     return this._moves;
   }
 
+  get win() {
+    return this._win;
+  }
+
+  checkWin() {
+    const white = this._field.field.filter(
+      (cell) => cell.figure.type == 6 && cell.figure.color == 1
+    ).length;
+    const black = this._field.field.filter(
+      (cell) => cell.figure.type == 6 && cell.figure.color == 0
+    ).length;
+
+    if (white && !black) {
+      this._win = 1;
+    } else if (!white && black) {
+      this._win = 0;
+    }
+
+    console.log(this._win);
+  }
+
   selectFigure(position) {
     this._selectedCells = [];
     this._selectedFigure = {};
@@ -90,21 +112,30 @@ class Game {
     this._selectedFigure = this._field.getCell(position).figure;
   }
 
-  moveFigure(position, cb) {
-    this._moves.push(`${this._selectedFigure.position}${position}`);
-    cb(`${this._selectedFigure.position}${position}`);
+  moveFigure(position, cb, mbwin) {
+    if (this._win === false) {
+      this._moves.push(`${this._selectedFigure.position}${position}`);
+      cb(`${this._selectedFigure.position}${position}`);
 
-    this._field.moveFigure(this._selectedFigure.position, position);
-    this._round = this._round == 1 ? 0 : 1;
+      this._field.moveFigure(this._selectedFigure.position, position);
+      this.checkWin();
 
-    this._selectedCells = [];
-    this._selectedFigure = {};
+      if (this._win !== false) mbwin(true);
+
+      this._round = this._round == 1 ? 0 : 1;
+
+      this._selectedCells = [];
+      this._selectedFigure = {};
+    }
   }
 
   remoteMoveFigure(move) {
-    this._moves.push(move);
-    this._round = this._round == 1 ? 0 : 1;
-    this._field.remoteMoveFigure(move);
+    if (this._win === false) {
+      this._moves.push(move);
+      this._round = this._round == 1 ? 0 : 1;
+      this._field.remoteMoveFigure(move);
+      this.checkWin();
+    }
   }
 }
 
