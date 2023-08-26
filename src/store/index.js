@@ -7,12 +7,14 @@ export default createStore({
     roomKey: "",
     userID: "",
     users: { first: false, second: false },
+    play: false,
     moves: [],
+    win: false,
   },
   actions: {
     startGame({ commit }, key) {
       writeData(`rooms/${key}/play`, true).then(() => {
-        writeData(`games/${key}/moves`, []);
+        writeData(`games/${key}`, { moves: [], win: false });
       });
       commit("setPlay", true);
     },
@@ -66,9 +68,27 @@ export default createStore({
       subscribeToUpadate(`games/${key}/moves`, (snapshot) => {
         commit("setMoves", snapshot.val() ? snapshot.val() : []);
       });
+      subscribeToUpadate(`games/${key}/win`, (snapshot) => {
+        commit("setWin", snapshot.val());
+      });
     },
     writeNewMove({ state }, move) {
       writeData(`games/${state.roomKey}/moves`, [...state.moves, move]);
+    },
+    exitFromGame({ dispatch, state }) {
+      writeData(
+        `games/${state.roomKey}/win`,
+        state.users.first == state.userID ? 1 : 0
+      ).then(() => {
+        dispatch("clearAll");
+      });
+    },
+    clearAll({ commit }) {
+      commit("setRoomKey", "");
+      commit("setUserID", "");
+      commit("setUsers", { first: false, second: false });
+      commit("setPlay", false);
+      commit("setMoves", []);
     },
   },
   mutations: {
@@ -87,6 +107,9 @@ export default createStore({
     setMoves(state, value) {
       state.moves = value;
     },
+    setWin(state, value) {
+      state.win = value;
+    },
   },
   getters: {
     users(state) {
@@ -103,6 +126,9 @@ export default createStore({
     },
     moves(state) {
       return state.moves;
+    },
+    win(state) {
+      return state.win;
     },
   },
 });
