@@ -49,8 +49,6 @@ class Field {
   }
 
   remoteMoveFigure(move) {
-    console.log(move);
-    console.log(this.getCell(move[0] + move[1]));
     this.getCell(move[0] + move[1]).figure.move(move[2] + move[3]);
     const temp = this.getCell(move[0] + move[1]).figure;
     this.getCell(move[0] + move[1]).setFigure({});
