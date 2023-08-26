@@ -67,7 +67,6 @@ export default {
 
     start() {
       if (this.users.first == this.userID && this.users.second) {
-        console.log(this.roomKey);
         this.startGame(this.roomKey);
       }
     },
