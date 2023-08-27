@@ -1,5 +1,6 @@
 <template>
   <div class="container">
+    <div class="round">Ход {{ game.round == 1 ? "белых" : "черных" }}</div>
     <table class="board">
       <ChessCell
         v-for="item in game.field"
@@ -42,6 +43,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
 }
 
 .board {
@@ -52,9 +54,14 @@
   flex-wrap: wrap;
 
   margin: 0 auto;
-  margin-top: 40px;
 
   position: relative;
+}
+
+.round {
+  font-size: 25px;
+  font-weight: 700;
+  margin-bottom: 15px;
 }
 
 .bar {
@@ -186,13 +193,12 @@ export default {
     },
 
     exit() {
-      this.exitFromGame();
       this.$router.push({ name: "home" });
     },
   },
 
   computed: {
-    ...mapGetters(["users", "userID", "moves", "win"]),
+    ...mapGetters(["users", "userID", "moves", "win", "roomKey"]),
 
     letters() {
       return ["a", "b", "c", "d", "e", "f", "g", "h"];
@@ -207,7 +213,13 @@ export default {
     },
 
     win(newValue) {
-      if (newValue != this.game.side) this.clearAll();
+      if (
+        newValue != this.game.side &&
+        newValue !== null &&
+        newValue !== false
+      ) {
+        this.clearAll();
+      }
     },
   },
 };
