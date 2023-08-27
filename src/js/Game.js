@@ -77,6 +77,10 @@ class Game {
     return this._win;
   }
 
+  get round() {
+    return this._round;
+  }
+
   checkWin() {
     const white = this._field.field.filter(
       (cell) => cell.figure.type == 6 && cell.figure.color == 1
@@ -90,8 +94,6 @@ class Game {
     } else if (!white && black) {
       this._win = 0;
     }
-
-    console.log(this._win);
   }
 
   selectFigure(position) {
