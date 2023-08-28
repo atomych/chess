@@ -22,16 +22,21 @@ export default createStore({
       const userID = getKey();
       commit("setUserID", userID);
 
-      readData(`rooms/${settings.key}`).then((snapshot) => {
-        const data = snapshot.val();
-        commit("setRoomKey", data.roomKey);
+      readData(`rooms/${settings.key}`)
+        .then((snapshot) => {
+          const data = snapshot.val();
+          commit("setRoomKey", data.roomKey);
 
-        writeData(`rooms/${settings.key}/users/second`, userID).then(() => {
-          commit("setUsers", { first: data.users.first, second: userID });
-          settings.cb();
-          dispatch("subscribeToStartGame", data.roomKey);
+          writeData(`rooms/${settings.key}/users/second`, userID).then(() => {
+            commit("setUsers", { first: data.users.first, second: userID });
+            settings.cb();
+            dispatch("subscribeToStartGame", data.roomKey);
+          });
+        })
+        .catch((err) => {
+          console.log("ошибка подключения к комнате");
+          console.log(err);
         });
-      });
     },
     createRoom({ commit, dispatch }, cb) {
       const userID = getKey();

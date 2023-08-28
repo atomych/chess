@@ -78,6 +78,7 @@ export default {
       });
     },
     join() {
+      if (this.roomKey == "") return;
       this.connectToRoom({
         key: this.roomKey,
         cb: () => {
