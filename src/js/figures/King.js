@@ -72,6 +72,60 @@ class King {
       if (figure.color != this._color) result.push(cell);
     }
 
+    if (this._position == this._startPosition) {
+      if (this._color == 1) {
+        const rook1 = field.getCell("a1");
+        if (rook1.figure?.type == 4 && rook1.figure?.color == 1) {
+          if (rook1.figure.position == rook1.figure._startPosition) {
+            if (
+              field.getCell("b1").figure.type === undefined &&
+              field.getCell("c1").figure.type === undefined &&
+              field.getCell("d1").figure.type === undefined
+            ) {
+              result.push("c1");
+            }
+          }
+        }
+
+        const rook2 = field.getCell("h1");
+        if (rook2.figure?.type == 4 && rook2.figure?.color == 1) {
+          if (rook2.figure.position == rook2.figure._startPosition) {
+            if (
+              field.getCell("g1").figure.type === undefined &&
+              field.getCell("f1").figure.type === undefined
+            ) {
+              result.push("g1");
+            }
+          }
+        }
+      } else {
+        const rook1 = field.getCell("a8");
+        if (rook1.figure?.type == 4 && rook1.figure?.color == 0) {
+          if (rook1.figure.position == rook1.figure._startPosition) {
+            if (
+              field.getCell("b8").figure.type === undefined &&
+              field.getCell("c8").figure.type === undefined &&
+              field.getCell("d8").figure.type === undefined
+            ) {
+              result.push("c8");
+            }
+          }
+        }
+
+        const rook2 = field.getCell("h8");
+        if (rook2.figure?.type == 4 && rook2.figure?.color == 0) {
+          if (rook2.figure.position == rook2.figure._startPosition) {
+            if (
+              field.getCell("g8").figure.type === undefined &&
+              field.getCell("f8").figure.type === undefined
+            ) {
+              result.push("g8");
+            }
+          }
+        }
+      }
+    }
+
     return result;
   }
 
