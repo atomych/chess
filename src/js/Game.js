@@ -15,6 +15,11 @@ class Game {
     this._selectedFigure = {};
     this._moves = [];
     this._win = false;
+    this._message = null;
+    this._checks = {
+      0: false,
+      1: false,
+    };
 
     const letters = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
@@ -81,6 +86,10 @@ class Game {
     return this._round;
   }
 
+  get message() {
+    return this._message;
+  }
+
   checkWin() {
     const white = this._field.field.filter(
       (cell) => cell.figure.type == 6 && cell.figure.color == 1
@@ -96,6 +105,36 @@ class Game {
     }
   }
 
+  checkKingDanger() {
+    const kingCell = this._field.field.filter(
+      (cell) => cell.figure.type == 6 && this._round == cell.figure.color
+    )[0];
+    let check = false;
+
+    for (let cell of this._field.field) {
+      if (
+        cell.figure.color != this._round &&
+        (cell.figure.color === 0 || cell.figure.color === 1)
+      ) {
+        const figure = cell.figure;
+        const possible = figure.possibleMoves(this._field);
+
+        if (possible.indexOf(kingCell.id) != -1) {
+          check = true;
+          break;
+        }
+      }
+    }
+
+    if (check) {
+      this._checks[this._round] = true;
+      this._message = "Король в опасности!";
+      setTimeout(() => {
+        this._message = null;
+      }, 1500);
+    }
+  }
+
   selectFigure(position) {
     this._selectedCells = [];
     this._selectedFigure = {};
@@ -105,17 +144,54 @@ class Game {
       this._field.getCell(position).figure.color != this._side
     )
       return;
-
-    for (let cell of this._field
-      .getCell(position)
-      .figure.possibleMoves(this._field)) {
-      this._selectedCells.push(cell);
+    if (this._field.getCell(position).figure.type == 6) {
+      for (let cell of this._field
+        .getCell(position)
+        .figure.possibleMoves(this._field, this._checks[this._side])) {
+        this._selectedCells.push(cell);
+      }
+    } else {
+      for (let cell of this._field
+        .getCell(position)
+        .figure.possibleMoves(this._field)) {
+        this._selectedCells.push(cell);
+      }
     }
     this._selectedFigure = this._field.getCell(position).figure;
   }
 
   moveFigure(position, cb, mbwin) {
+    const letters = ["a", "b", "c", "d", "e", "f", "g", "h"];
+    let addingRookMove = "";
+
     if (this._win === false) {
+      if (this._selectedFigure.type == 6) {
+        const index1 = letters.indexOf(this._selectedFigure.position[0]) + 1;
+        const index2 = letters.indexOf(position[0]) + 1;
+        const index3 = parseInt(this._selectedFigure.position[1]);
+        const index4 = parseInt(position[1]);
+
+        if (Math.abs(index1 - index2) > 1 || Math.abs(index3 - index4) > 1) {
+          // Уловие выполнения рокировки выполнилось
+          // Нужно вычислисть ладью и переместить ее, начиная с GameView, чтобы отправить сразу 2 мува
+          if (this._side == 1) {
+            if (position == "c1") {
+              addingRookMove = this._field.getCell("a1").figure.position + "d1";
+            }
+            if (position == "g1") {
+              addingRookMove = this._field.getCell("h1").figure.position + "f1";
+            }
+          } else {
+            if (position == "c8") {
+              addingRookMove = this._field.getCell("a8").figure.position + "d8";
+            }
+            if (position == "g8") {
+              addingRookMove = this._field.getCell("h8").figure.position + "f8";
+            }
+          }
+        }
+      }
+
       this._moves.push(`${this._selectedFigure.position}${position}`);
       cb(`${this._selectedFigure.position}${position}`);
 
@@ -124,19 +200,40 @@ class Game {
 
       if (this._win !== false) mbwin(true);
 
-      this._round = this._round == 1 ? 0 : 1;
-
-      this._selectedCells = [];
-      this._selectedFigure = {};
+      if (addingRookMove == "") {
+        this._round = this._round == 1 ? 0 : 1;
+        this._selectedCells = [];
+        this._selectedFigure = {};
+      } else {
+        this._selectedFigure = this._field.getCell(
+          addingRookMove[0] + addingRookMove[1]
+        ).figure;
+        this.moveFigure(addingRookMove[2] + addingRookMove[3], cb, mbwin);
+      }
     }
   }
 
   remoteMoveFigure(move) {
     if (this._win === false) {
       this._moves.push(move);
-      this._round = this._round == 1 ? 0 : 1;
+
+      const lastMove = this._moves[this._moves.length - 1];
+      const preLastMove = this._moves[this._moves.length - 2];
+
+      if (
+        (lastMove == "a1d1" && preLastMove == "e1c1") ||
+        (lastMove == "h1f1" && preLastMove == "e1g1") ||
+        (lastMove == "a8d8" && preLastMove == "e8c8") ||
+        (lastMove == "h8f8" && preLastMove == "e8g8")
+      )
+        this._round = this._side;
+      else this._round = this._round == 1 ? 0 : 1;
+
       this._field.remoteMoveFigure(move);
       this.checkWin();
+      if (this._win === false) {
+        this.checkKingDanger();
+      }
     }
   }
 }
