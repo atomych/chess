@@ -1,10 +1,11 @@
 <template>
   <div class="container">
     <div class="round">Ход {{ game.round == 1 ? "белых" : "черных" }}</div>
-    <table class="board">
+    <table class="board" :style="{ width: `${size}px`, height: `${size}px` }">
       <ChessCell
         v-for="item in game.field"
         :key="item.id"
+        :style="{ width: `${size / 8}px`, height: `${size / 8}px` }"
         :cellColor="item.color"
         :cellID="item.id"
         :cellFigureColor="item.figure.color"
@@ -15,12 +16,12 @@
         @select="select"
         @move="move"
       />
-      <div class="bar left">
+      <div class="bar left" :style="{ height: `${size}px` }">
         <div class="left__item item" v-for="item in 8" :key="item">
           {{ game.side == 1 ? 9 - item : item }}
         </div>
       </div>
-      <div class="bar bottom">
+      <div class="bar bottom" :style="{ width: `${size}px` }">
         <div class="bottom__item item" v-for="item in 8" :key="item">
           {{ game.side == 1 ? letters[item - 1] : letters[8 - item] }}
         </div>
@@ -31,6 +32,9 @@
         {{ `Победили ${win == 1 ? "белые" : "черные"}!` }}
       </div>
       <button class="btn" @click="exit()">В главное меню</button>
+    </div>
+    <div class="before-round-message" v-if="game.message">
+      <div class="text">{{ game.message }}</div>
     </div>
   </div>
 </template>
@@ -47,13 +51,10 @@
 }
 
 .board {
-  width: 640px;
-  height: 640px;
-
   display: flex;
   flex-wrap: wrap;
 
-  margin: 0 auto;
+  margin: 0 5px;
 
   position: relative;
 }
@@ -78,7 +79,6 @@
 
   &.left {
     width: 40px;
-    height: 640px;
 
     left: -40px;
     top: 0;
@@ -101,7 +101,6 @@
   }
 
   &.bottom {
-    width: 640px;
     height: 40px;
 
     left: 0;
@@ -140,6 +139,25 @@
     cursor: pointer;
   }
 }
+
+.before-round-message {
+  position: absolute;
+
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #ffffffd4;
+
+  z-index: 100;
+
+  .text {
+    font-size: 25px;
+  }
+}
 </style>
 
 <script>
@@ -157,15 +175,24 @@ export default {
   data() {
     return {
       game: {},
+      size: 640,
     };
   },
 
   created() {
+    this.checkSize();
+
+    window.addEventListener("resize", this.checkSize);
+
     this.game = new Game({
       colors: { 0: "#e0f7dc", 1: "#5d8f40" },
       side: this.users.first == this.userID ? 1 : 0,
     });
     this.subscribeToGame(this.$route.params.key);
+  },
+
+  unmounted() {
+    window.removeEventListener("resize", this.checkSize);
   },
 
   methods: {
@@ -195,6 +222,14 @@ export default {
     exit() {
       this.$router.push({ name: "home" });
     },
+
+    checkSize() {
+      const width = window.innerWidth;
+
+      if (width < 690) {
+        this.size = width - 60;
+      }
+    },
   },
 
   computed: {
@@ -208,6 +243,9 @@ export default {
   watch: {
     moves(newValue) {
       if (newValue.length != this.game.moves.length) {
+        if (newValue.length - this.game.moves.length == 2) {
+          this.game.remoteMoveFigure(newValue[newValue.length - 2]);
+        }
         this.game.remoteMoveFigure(newValue[newValue.length - 1]);
       }
     },
