@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h1 class="title">Комната - {{ roomKey }}</h1>
+    <h1 class="title" @click="copyKey()">Комната - {{ roomKey }}</h1>
     <div class="player">Игрок 1: {{ users.first }}</div>
     <div class="player">
       Игрок 2: {{ users.second == false ? "место свободно" : users.second }}
@@ -28,6 +28,7 @@
 
 .title {
   margin-bottom: 30px;
+  cursor: pointer;
 }
 
 .player {
@@ -69,6 +70,10 @@ export default {
       if (this.users.first == this.userID && this.users.second) {
         this.startGame(this.roomKey);
       }
+    },
+
+    copyKey() {
+      navigator.clipboard.writeText(this.roomKey);
     },
   },
 
