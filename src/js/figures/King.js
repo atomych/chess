@@ -18,7 +18,7 @@ class King {
     return this._type;
   }
 
-  possibleMoves(field) {
+  possibleMoves(field, check) {
     const result = [];
     const letters = ["a", "b", "c", "d", "e", "f", "g", "h"];
     let indexL = letters.indexOf(this._position[0]) + 1;
@@ -72,7 +72,7 @@ class King {
       if (figure.color != this._color) result.push(cell);
     }
 
-    if (this._position == this._startPosition) {
+    if (this._position == this._startPosition && check == false) {
       if (this._color == 1) {
         const rook1 = field.getCell("a1");
         if (rook1.figure?.type == 4 && rook1.figure?.color == 1) {
